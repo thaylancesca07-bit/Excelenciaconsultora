@@ -1,273 +1,267 @@
 import streamlit as st
-from datetime import datetime, time
+import time
+from datetime import datetime
 
-# --- 1. CONFIGURACIÓN ROBUSTA ---
+# --- 1. CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(
-    page_title="RRHH Gestión 🇵🇾",
+    page_title="RRHH App",
     layout="centered",
-    page_icon="📱",
+    page_icon="👔",
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. ESTILO VISUAL (CSS LIMPIO) ---
-# Eliminé los trucos complejos. Este estilo solo embellece los botones.
+# --- 2. CSS FORZADO (PARA QUE SE LEA SÍ O SÍ) ---
 st.markdown("""
 <style>
-    /* Fondo limpio */
-    .stApp { background-color: #F0F2F5; }
-    
-    /* Títulos en azul corporativo */
-    h1, h2, h3 { color: #003366; text-align: center; }
+    /* 1. Fondo General - Gris muy suave */
+    .stApp {
+        background-color: #E8EAF6 !important;
+    }
 
-    /* BOTONES ESTILO TARJETA (Grande y legible) */
+    /* 2. Ocultar elementos molestos de Streamlit */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+
+    /* 3. ENCABEZADO AZUL (Estilo App Nativa) */
+    .css-10trblm {
+        color: white !important;
+    }
+    
+    /* Contenedor del Título */
+    .app-header {
+        background-color: #003366;
+        padding: 20px;
+        border-radius: 0 0 20px 20px;
+        margin-top: -50px;
+        margin-left: -50px;
+        margin-right: -50px;
+        margin-bottom: 20px;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+    .app-header h2 {
+        color: white !important;
+        font-family: 'Arial', sans-serif;
+        font-weight: bold;
+        margin: 0;
+    }
+    .app-header p {
+        color: #cfd8dc !important;
+        margin: 0;
+    }
+
+    /* 4. BOTONES DEL MENÚ (Forzados para leerse bien) */
     div.stButton > button {
         width: 100%;
-        height: 90px;              /* Altura fija cómoda */
-        background-color: white;   /* Fondo blanco */
-        color: #003366;            /* Texto azul */
-        font-size: 18px;           /* Letra grande */
-        font-weight: bold;
-        border: 1px solid #ddd;
-        border-radius: 12px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        margin-bottom: 10px;
+        height: 100px;
+        background-color: #FFFFFF !important; /* Fondo BLANCO puro */
+        color: #003366 !important;            /* Texto AZUL OSCURO fuerte */
+        border: 2px solid #003366 !important; /* Borde AZUL */
+        border-radius: 15px !important;
+        font-size: 18px !important;
+        font-weight: 900 !important;          /* Letra muy gruesa */
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         transition: transform 0.1s;
     }
     div.stButton > button:hover {
         transform: scale(1.02);
-        border-color: #003366;
-        color: #0056b3;
+        background-color: #003366 !important; /* Al pasar mouse: Fondo AZUL */
+        color: #FFFFFF !important;            /* Texto BLANCO */
+    }
+    div.stButton > button:active {
+        background-color: #002244 !important;
+        color: white !important;
     }
 
-    /* Tarjetas de información (El marco blanco) */
-    .card {
+    /* 5. TARJETAS DE CONTENIDO (Blanco sobre gris) */
+    .content-card {
         background-color: white;
         padding: 20px;
         border-radius: 15px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
-        border-top: 4px solid #003366;
+        border-top: 5px solid #003366;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        color: #333333 !important; /* Texto negro forzado */
     }
     
-    /* Ocultar menú de desarrollo */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
+    /* Textos generales forzados a oscuro para leerse */
+    p, label, span, div {
+        color: #0d1b2a;
+    }
+    
+    /* Inputs */
+    .stTextInput input {
+        background-color: white !important;
+        color: black !important;
+        border: 1px solid #ccc !important;
+    }
+
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. DATOS DE MEMORIA (SESSION STATE) ---
-if 'page' not in st.session_state:
-    st.session_state.page = 'home'
+# --- 3. GESTIÓN DE SESIÓN (LOGIN Y DATOS) ---
+if 'logueado' not in st.session_state:
+    st.session_state.logueado = False
 
-# Datos simulados que persisten mientras la app está abierta
+if 'pagina' not in st.session_state:
+    st.session_state.pagina = 'login'
+
+# Datos simulados del empleado
 if 'usuario' not in st.session_state:
     st.session_state.usuario = {
         "nombre": "Juan Pérez",
-        "cargo": "Analista Senior",
-        "area": "Finanzas",
-        "salario": 3500000,
-        "vacaciones_saldo": 12,
-        "asistencia_hoy": {"entrada": None, "salida": None}
+        "cedula": "1.234.567",
+        "cargo": "Analista",
+        "img": "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
     }
 
-# --- 4. FUNCIÓN DE NAVEGACIÓN SEGURA ---
-def ir_a(pagina):
-    st.session_state.page = pagina
+# --- 4. FUNCIONES DE NAVEGACIÓN ---
+def ir_a(destino):
+    st.session_state.pagina = destino
     st.rerun()
 
-def volver():
-    st.markdown("---")
-    # Columna central para el botón
-    col1, col2, col3 = st.columns([1, 4, 1])
-    with col2:
-        if st.button("🏠 Volver al Menú Principal"):
-            ir_a('home')
+def cerrar_sesion():
+    st.session_state.logueado = False
+    st.session_state.pagina = 'login'
+    st.rerun()
 
 # --- 5. PANTALLAS ---
 
-# === PANTALLA DE INICIO (MENÚ) ===
-if st.session_state.page == 'home':
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown(f"<h2>👋 Hola, {st.session_state.usuario['nombre'].split()[0]}</h2>", unsafe_allow_html=True)
-    st.caption("Panel de Control RRHH")
-    st.markdown("---")
-
-    # GRID AUTOMÁTICO (4 columnas en PC, 1 en Celular automáticamente)
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        if st.button("👤\nMi Perfil"): ir_a('perfil')
-    with col2:
-        if st.button("💼\nLaboral"): ir_a('laboral')
-    with col3:
-        if st.button("⏰\nAsistencia"): ir_a('asistencia')
-    with col4:
-        if st.button("💰\nPagos"): ir_a('pagos')
-
-    col5, col6, col7, col8 = st.columns(4)
-    
-    with col5:
-        if st.button("🏖️\nVacaciones"): ir_a('vacaciones')
-    with col6:
-        if st.button("🏥\nIPS"): ir_a('ips')
-    with col7:
-        if st.button("📋\nEvaluar"): ir_a('evaluacion')
-    with col8:
-        if st.button("🚪\nSalida"): ir_a('salida')
-
-# === PANTALLA 1: PERFIL ===
-elif st.session_state.page == 'perfil':
-    st.title("👤 Mi Perfil")
-    with st.container():
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.subheader(st.session_state.usuario['nombre'])
-        st.write(f"*Cargo:* {st.session_state.usuario['cargo']}")
-        st.markdown("---")
-        
-        # Formulario
-        nuevo_nombre = st.text_input("Nombre Completo", st.session_state.usuario['nombre'])
-        telefono = st.text_input("Celular", "0981 000 000")
-        email = st.text_input("Correo", "juan@empresa.com")
-        
-        if st.button("💾 Guardar Datos"):
-            st.session_state.usuario['nombre'] = nuevo_nombre
-            st.success("Datos guardados correctamente")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-    volver()
-
-# === PANTALLA 2: LABORAL ===
-elif st.session_state.page == 'laboral':
-    st.title("💼 Info Laboral")
-    with st.container():
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        
-        c1, c2 = st.columns(2)
-        c1.metric("Área", st.session_state.usuario['area'])
-        c2.metric("Antigüedad", "2 Años")
-        
-        st.markdown("---")
-        st.info("📌 Tipo de Contrato: Indefinido")
-        st.info("📌 Seguro Médico: Santa Clara (Activo)")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-    volver()
-
-# === PANTALLA 3: ASISTENCIA ===
-elif st.session_state.page == 'asistencia':
-    st.title("⏰ Asistencia")
-    with st.container():
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        
-        st.write(f"Fecha: *{datetime.now().strftime('%d/%m/%Y')}*")
-        
-        c1, c2 = st.columns(2)
-        with c1:
-            hora_e = st.time_input("Entrada", value=time(8,0))
-        with c2:
-            hora_s = st.time_input("Salida", value=time(17,0))
-            
-        if st.button("✅ Marcar Asistencia", type="primary"):
-            st.session_state.usuario['asistencia_hoy'] = {"entrada": hora_e, "salida": hora_s}
-            st.success("Marca registrada con éxito")
-            
-        st.warning("⚠️ Alerta: Tienes 1 llegada tardía esta semana")
-        st.markdown('</div>', unsafe_allow_html=True)
-    volver()
-
-# === PANTALLA 4: PAGOS ===
-elif st.session_state.page == 'pagos':
-    st.title("💰 Mis Pagos")
-    
-    # Cálculos
-    salario = st.session_state.usuario['salario']
-    ips = salario * 0.09
-    neto = salario - ips
+# === PANTALLA DE LOGIN (LO PRIMERO QUE SE VE) ===
+if not st.session_state.logueado:
+    st.markdown("""
+        <div class="app-header" style="background-color: transparent; box-shadow: none;">
+            <h1 style="color:#003366!important; font-size: 40px;">RRHH</h1>
+            <h3 style="color:#003366!important;">Gestión Integral</h3>
+        </div>
+    """, unsafe_allow_html=True)
     
     with st.container():
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        
-        col1, col2 = st.columns(2)
-        col1.metric("Salario Base", f"Gs. {salario:,.0f}")
-        col2.metric("Descuento IPS", f"- {ips:,.0f}")
-        
-        st.divider()
-        st.metric("💵 NETO A COBRAR", f"Gs. {neto:,.0f}")
+        st.markdown('<div class="content-card" style="text-align: center;">', unsafe_allow_html=True)
+        st.markdown("#### Iniciar Sesión")
+        usuario = st.text_input("Usuario (Cédula)")
+        password = st.text_input("Contraseña", type="password")
         
         st.markdown("<br>", unsafe_allow_html=True)
-        st.button("📩 Descargar Recibo (PDF)")
         
+        if st.button("INGRESAR"):
+            if usuario and password: # Validación simple
+                st.session_state.logueado = True
+                st.session_state.pagina = 'home'
+                st.rerun()
+            else:
+                st.error("Ingrese usuario y contraseña")
         st.markdown('</div>', unsafe_allow_html=True)
-    volver()
 
-# === PANTALLA 5: VACACIONES ===
-elif st.session_state.page == 'vacaciones':
-    st.title("🏖️ Vacaciones")
-    with st.container():
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        
-        saldo = st.session_state.usuario['vacaciones_saldo']
-        st.metric("Días Disponibles", f"{saldo} Días")
-        
-        st.write("### Solicitar Días")
-        fechas = st.date_input("Selecciona fecha inicio y fin", [])
-        
-        if st.button("Enviar Solicitud"):
-            st.success("Solicitud enviada a tu jefe para aprobación.")
-            
-        st.markdown('</div>', unsafe_allow_html=True)
-    volver()
+# === SI YA ESTÁ LOGUEADO ===
+else:
+    # ENCABEZADO AZUL FIJO (Estilo App)
+    st.markdown(f"""
+    <div class="app-header">
+        <h2>Hola, {st.session_state.usuario['nombre'].split()[0]}</h2>
+        <p>{st.session_state.usuario['cargo']} - ID: {st.session_state.usuario['cedula']}</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-# === PANTALLA 6: IPS ===
-elif st.session_state.page == 'ips':
-    st.title("🏥 IPS y Salud")
-    with st.container():
-        st.markdown('<div class="card">', unsafe_allow_html=True)
+    # === MENÚ PRINCIPAL (HOME) ===
+    if st.session_state.pagina == 'home':
         
-        st.success("✅ Tu seguro IPS está ACTIVO")
-        
-        st.markdown("---")
-        st.subheader("Subir Reposo Médico")
-        archivo = st.file_uploader("Foto del certificado")
-        
-        if st.button("Enviar Reposo"):
-            st.info("Documento enviado a RRHH.")
-            
-        st.markdown('</div>', unsafe_allow_html=True)
-    volver()
-
-# === PANTALLA 7: EVALUACIÓN ===
-elif st.session_state.page == 'evaluacion':
-    st.title("📋 Evaluación")
-    with st.container():
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        
-        st.write("Autoevaluación Mensual")
-        puntaje = st.slider("¿Cómo calificas tu desempeño?", 1, 10, 8)
-        
-        st.write(f"Tu calificación: *{puntaje}/10*")
-        st.progress(puntaje / 10)
-        
-        st.text_area("Comentarios / Logros del mes")
-        st.button("Enviar Evaluación")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-    volver()
-
-# === PANTALLA 8: SALIDA ===
-elif st.session_state.page == 'salida':
-    st.title("🚪 Desvinculación")
-    with st.container():
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        
-        st.warning("Zona de Procesos de Salida")
-        
-        motivo = st.selectbox("Motivo", ["Renuncia", "Despido", "Jubilación"])
-        fecha = st.date_input("Fecha de Salida")
-        
+        # GRID DE BOTONES
         c1, c2 = st.columns(2)
-        c1.button("Simular Liquidación")
-        c2.button("Pedir Constancia")
+        with c1:
+            if st.button("👤\nPerfil"): ir_a('perfil')
+        with c2:
+            if st.button("💼\nLaboral"): ir_a('laboral')
         
-        st.markdown('</div>', unsafe_allow_html=True)
-    volver()
+        c3, c4 = st.columns(2)
+        with c3:
+            if st.button("⏰\nAsistencia"): ir_a('asistencia')
+        with c4:
+            if st.button("💰\nPagos"): ir_a('pagos')
+
+        c5, c6 = st.columns(2)
+        with c5:
+            if st.button("🏖️\nVacaciones"): ir_a('vacaciones')
+        with c6:
+            if st.button("🏥\nIPS"): ir_a('ips')
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🔒 Cerrar Sesión", type="primary"): 
+            cerrar_sesion()
+
+    # === PANTALLA 1: PERFIL ===
+    elif st.session_state.pagina == 'perfil':
+        st.markdown(f"<h3 style='color:#003366;'>Datos del Colaborador</h3>", unsafe_allow_html=True)
+        
+        with st.container():
+            st.markdown('<div class="content-card">', unsafe_allow_html=True)
+            c_img, c_info = st.columns([1,2])
+            with c_img:
+                st.image(st.session_state.usuario['img'], width=80)
+            with c_info:
+                st.markdown(f"*{st.session_state.usuario['nombre']}*")
+                st.caption("Estado: Activo")
+            
+            st.text_input("Cédula", st.session_state.usuario['cedula'], disabled=True)
+            correo = st.text_input("Correo", "juan@gmail.com")
+            tel = st.text_input("Teléfono", "0981 123 456")
+            
+            if st.button("Guardar Cambios"):
+                st.success("Datos actualizados")
+            st.markdown('</div>', unsafe_allow_html=True)
+        
+        if st.button("⬅️ Volver"): ir_a('home')
+
+    # === PANTALLA 2: LABORAL ===
+    elif st.session_state.pagina == 'laboral':
+        st.markdown(f"<h3 style='color:#003366;'>Información Laboral</h3>", unsafe_allow_html=True)
+        
+        with st.container():
+            st.markdown('<div class="content-card">', unsafe_allow_html=True)
+            st.selectbox("Cargo", ["Analista", "Gerente"], index=0)
+            st.selectbox("Departamento", ["Finanzas", "RRHH"], index=0)
+            st.selectbox("Contrato", ["Indefinido", "Jornal"], index=0)
+            st.date_input("Fecha Ingreso", value=datetime.today())
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+        if st.button("⬅️ Volver"): ir_a('home')
+
+    # === PANTALLA 3: ASISTENCIA ===
+    elif st.session_state.pagina == 'asistencia':
+        st.markdown(f"<h3 style='color:#003366;'>Asistencia y Horarios</h3>", unsafe_allow_html=True)
+        
+        with st.container():
+            st.markdown('<div class="content-card">', unsafe_allow_html=True)
+            col1, col2 = st.columns(2)
+            with col1:
+                st.text_input("Entrada", "08:00")
+            with col2:
+                st.text_input("Salida", "17:00")
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown('<div style="background-color:#d4edda; padding:10px; border-radius:5px; text-align:center; color:green; font-weight:bold;">Horas Extras: 2:00 Hs</div>', unsafe_allow_html=True)
+            st.markdown('<div style="background-color:#fff3cd; padding:10px; border-radius:5px; text-align:center; color:#856404; font-weight:bold; margin-top:5px;">⚠️ Alerta: 1 Tardanza</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+        if st.button("⬅️ Volver"): ir_a('home')
+
+    # === PANTALLA 4: PAGOS ===
+    elif st.session_state.pagina == 'pagos':
+        st.markdown(f"<h3 style='color:#003366;'>Remuneraciones</h3>", unsafe_allow_html=True)
+        
+        with st.container():
+            st.markdown('<div class="content-card">', unsafe_allow_html=True)
+            st.metric("Salario Base", "Gs. 3.500.000")
+            st.metric("Horas Extras", "Gs. 500.000")
+            st.markdown("---")
+            if st.button("Ver Recibo de Pago"):
+                st.info("Descargando PDF...")
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+        if st.button("⬅️ Volver"): ir_a('home')
+
+    # === OTRAS PANTALLAS (Plantilla Genérica) ===
+    else:
+        st.markdown(f"<h3 style='color:#003366;'>{st.session_state.pagina.upper()}</h3>", unsafe_allow_html=True)
+        st.info("Módulo en construcción")
+        if st.button("⬅️ Volver"): ir_a('home')
