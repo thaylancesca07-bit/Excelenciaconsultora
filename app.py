@@ -24,11 +24,6 @@ st.markdown("""
     header {visibility: hidden;}
 
     /* 3. ENCABEZADO AZUL (Estilo App Nativa) */
-    .css-10trblm {
-        color: white !important;
-    }
-    
-    /* Contenedor del Título */
     .app-header {
         background-color: #003366;
         padding: 20px;
@@ -69,10 +64,6 @@ st.markdown("""
         background-color: #003366 !important; /* Al pasar mouse: Fondo AZUL */
         color: #FFFFFF !important;            /* Texto BLANCO */
     }
-    div.stButton > button:active {
-        background-color: #002244 !important;
-        color: white !important;
-    }
 
     /* 5. TARJETAS DE CONTENIDO (Blanco sobre gris) */
     .content-card {
@@ -82,10 +73,11 @@ st.markdown("""
         border-top: 5px solid #003366;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         color: #333333 !important; /* Texto negro forzado */
+        margin-bottom: 20px;
     }
     
     /* Textos generales forzados a oscuro para leerse */
-    p, label, span, div {
+    p, label, span, div, h1, h2, h3, h4, h5, h6 {
         color: #0d1b2a;
     }
     
@@ -129,9 +121,11 @@ def cerrar_sesion():
 
 # === PANTALLA DE LOGIN (LO PRIMERO QUE SE VE) ===
 if not st.session_state.logueado:
+    
+    # Encabezado Login
     st.markdown("""
-        <div class="app-header" style="background-color: transparent; box-shadow: none;">
-            <h1 style="color:#003366!important; font-size: 40px;">RRHH</h1>
+        <div style="text-align: center; margin-top: 50px;">
+            <h1 style="color:#003366!important; font-size: 50px;">RRHH</h1>
             <h3 style="color:#003366!important;">Gestión Integral</h3>
         </div>
     """, unsafe_allow_html=True)
@@ -139,27 +133,35 @@ if not st.session_state.logueado:
     with st.container():
         st.markdown('<div class="content-card" style="text-align: center;">', unsafe_allow_html=True)
         st.markdown("#### Iniciar Sesión")
-        usuario = st.text_input("Usuario (Cédula)")
-        password = st.text_input("Contraseña", type="password")
+        
+        # Inputs de Login
+        usuario = st.text_input("Usuario", placeholder="admin")
+        password = st.text_input("Contraseña", type="password", placeholder="12345")
         
         st.markdown("<br>", unsafe_allow_html=True)
         
+        # Botón Login
         if st.button("INGRESAR"):
-            if usuario and password: # Validación simple
+            if usuario == "admin" and password == "12345":
                 st.session_state.logueado = True
                 st.session_state.pagina = 'home'
+                st.success("¡Bienvenido!")
+                time.sleep(1)
                 st.rerun()
             else:
-                st.error("Ingrese usuario y contraseña")
+                st.error("❌ Usuario o Contraseña incorrectos")
+        
+        st.markdown("---")
+        st.caption("Credenciales de prueba: admin / 12345")
         st.markdown('</div>', unsafe_allow_html=True)
 
-# === SI YA ESTÁ LOGUEADO ===
+# === SI YA ESTÁ LOGUEADO (DENTRO DE LA APP) ===
 else:
     # ENCABEZADO AZUL FIJO (Estilo App)
     st.markdown(f"""
     <div class="app-header">
-        <h2>Hola, {st.session_state.usuario['nombre'].split()[0]}</h2>
-        <p>{st.session_state.usuario['cargo']} - ID: {st.session_state.usuario['cedula']}</p>
+        <h2 style="color:white!important;">Hola, {st.session_state.usuario['nombre'].split()[0]}</h2>
+        <p style="color:#EEE!important;">{st.session_state.usuario['cargo']} - ID: {st.session_state.usuario['cedula']}</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -186,7 +188,7 @@ else:
             if st.button("🏥\nIPS"): ir_a('ips')
 
         st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("🔒 Cerrar Sesión", type="primary"): 
+        if st.button("🔒 Cerrar Sesión"): 
             cerrar_sesion()
 
     # === PANTALLA 1: PERFIL ===
@@ -260,7 +262,7 @@ else:
             
         if st.button("⬅️ Volver"): ir_a('home')
 
-    # === OTRAS PANTALLAS (Plantilla Genérica) ===
+    # === OTRAS PANTALLAS ===
     else:
         st.markdown(f"<h3 style='color:#003366;'>{st.session_state.pagina.upper()}</h3>", unsafe_allow_html=True)
         st.info("Módulo en construcción")
