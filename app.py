@@ -1,4 +1,4 @@
-[10:52 AM, 22/01/2026] Thaylan Cesca: import streamlit as st
+import streamlit as st
 import pandas as pd
 from datetime import datetime, time
 
@@ -301,3 +301,4 @@ elif st.session_state.page == 'salida':
         if st.button("Generar Liquidación"): st.success("Calculado")
         st.markdown('</div>', unsafe_allow_html=True)
     volver_inicio()
+
