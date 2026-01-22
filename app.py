@@ -1,4 +1,35 @@
-import streamlit as st
+[10:52 AM, 22/01/2026] Thaylan Cesca: import streamlit as st
+import pandas as pd
+from datetime import datetime, time
+
+# --- 1. CONFIGURACIÓN DE PÁGINA ---
+st.set_page_config(
+    page_title="RRHH Gestión Integral 🇵🇾",
+    layout="centered",
+    page_icon="📱",
+    initial_sidebar_state="collapsed" # Ocultamos sidebar para parecer más una App móvil
+)
+
+# --- 2. ESTILO CSS (Personalizado para parecer App Móvil) ---
+st.markdown("""
+<style>
+    /* Fondo general */
+    .stApp {
+        background-color: #F0F2F5;
+    }
+    
+    /* Encabezados */
+    h1, h2, h3 {
+        color: #003366;
+        text-align: center;
+        font-family: 'Arial', sans-serif;
+    }
+
+    /* Estilo de los Botones del Menú Principal (Simulando Tarjetas) */
+    div.stButton > button {
+        width: 100%;
+        height: 100p…
+[11:00 AM, 22/01/2026] Thaylan Cesca: import streamlit as st
 import pandas as pd
 from datetime import datetime, time
 import base64
@@ -6,15 +37,15 @@ import base64
 # --- 1. CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(
     page_title="RRHH Gestión Integral 🇵🇾",
-    layout="centered",
+    layout="centered", # 'centered' es mejor para simular App móvil. Usa 'wide' para llenar toda la pantalla de PC.
     page_icon="📱",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="auto" # 'auto' colapsa en móvil y expande en PC
 )
 
-# --- 2. ESTILO CSS MEJORADO (Estilo Tarjeta App Móvil) ---
+# --- 2. ESTILO CSS RESPONSIVO (LA MAGIA ESTÁ AQUÍ 🪄) ---
 st.markdown("""
 <style>
-    /* Fondo general de la App */
+    /* Fondo general */
     .stApp {
         background-color: #F0F2F5;
     }
@@ -27,78 +58,75 @@ st.markdown("""
         text-align: center;
     }
 
-    /* ESTILO DE LOS BOTONES (LAS TARJETAS DEL MENÚ) */
+    /* ESTILO BASE DE BOTONES (PC y MÓVIL) */
     div.stButton > button {
-        width: 100%;
-        height: 110px;              /* Altura fija para que parezcan tarjetas */
-        background-color: #FFFFFF;  /* Fondo Blanco para máxima legibilidad */
-        color: #003366;             /* Texto Azul Oscuro */
-        font-size: 18px;            /* Texto grande */
-        font-weight: 800;           /* Texto en negrita */
-        border: 2px solid #E0E0E0;  /* Borde suave */
-        border-radius: 15px;        /* Bordes redondeados */
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Sombra suave */
+        background-color: #FFFFFF;
+        color: #003366;
+        font-weight: 800;
+        border: 2px solid #E0E0E0;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         transition: all 0.2s ease;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         line-height: 1.4;
+        width: 100%;
     }
 
-    /* Efecto al pasar el mouse (Hover) */
     div.stButton > button:hover {
-        transform: translateY(-3px); /* Se levanta un poco */
-        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-        border-color: #003366;
+        transform: translateY(-3px);
         background-color: #F8F9FA;
         color: #0056b3;
+        border-color: #003366;
     }
 
-    /* Estilo de los Contenedores de Información (Info Cards) */
+    /* --- MEDIA QUERY: REGLAS SOLO PARA CELULARES (Pantallas < 768px) --- */
+    @media (max-width: 768px) {
+        div.stButton > button {
+            height: 100px !important;  /* Botones ALTOS en celular para tocar fácil */
+            font-size: 18px !important; /* Letra GRANDE en celular */
+        }
+        /* Ocultar elementos decorativos en móvil si molestan */
+        .desktop-only { display: none; }
+    }
+
+    /* --- MEDIA QUERY: REGLAS SOLO PARA PC (Pantallas > 768px) --- */
+    @media (min-width: 769px) {
+        div.stButton > button {
+            height: 80px !important;   /* Botones más compactos en PC */
+            font-size: 16px !important; /* Letra normal */
+        }
+        /* Clase para ocultar cosas en PC que son solo de móvil */
+        .mobile-only { display: none; }
+    }
+
+    /* Estilo de Tarjetas de Info */
     .info-card {
         background-color: white;
         padding: 25px;
         border-radius: 20px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         margin-bottom: 20px;
-        border-top: 5px solid #003366; /* Detalle de color arriba */
+        border-top: 5px solid #003366;
     }
 
-    /* Alertas personalizadas */
-    .alert-box {
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 10px;
-        font-weight: bold;
-        text-align: center;
-    }
-    .success { background-color: #D4EDDA; color: #155724; border: 1px solid #C3E6CB; }
-    .warning { background-color: #FFF3CD; color: #856404; border: 1px solid #FFEEBA; }
-    .danger  { background-color: #F8D7DA; color: #721C24; border: 1px solid #F5C6CB; }
-
-    /* Forzar ocultar el menú de hamburguesa de Streamlit para que parezca más App */
+    /* Ocultar menú default de Streamlit */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. GESTIÓN DE ESTADO (SESSION STATE) ---
-if 'page' not in st.session_state:
-    st.session_state.page = 'home'
-
-# Datos de ejemplo persistentes
+# --- 3. GESTIÓN DE ESTADO ---
+if 'page' not in st.session_state: st.session_state.page = 'home'
 if 'datos_colaborador' not in st.session_state:
     st.session_state.datos_colaborador = {
-        "nombre": "Juan Pérez",
-        "cedula": "1.234.567",
-        "correo": "juan.perez@email.com",
-        "telefono": "0981 123 456",
-        "cargo": "Analista",
-        "area": "Finanzas",
-        "salario": 3500000,
-        "ingreso": datetime.today()
+        "nombre": "Juan Pérez", "cedula": "1.234.567",
+        "correo": "juan.perez@email.com", "telefono": "0981 123 456",
+        "cargo": "Analista", "area": "Finanzas",
+        "salario": 3500000, "ingreso": datetime.today()
     }
 
 # --- 4. NAVEGACIÓN ---
@@ -108,261 +136,168 @@ def navegar_a(pagina):
 
 def volver_inicio():
     st.markdown("---")
-    # Botón de volver con estilo distinto (más pequeño)
-    col1, col2, col3 = st.columns([1,2,1])
-    with col2:
-        if st.button("🏠 Volver al Menú Principal"):
+    c1, c2, c3 = st.columns([1,2,1])
+    with c2:
+        if st.button("🏠 Menú Principal"):
             st.session_state.page = 'home'
             st.rerun()
 
-# --- 5. PANTALLAS DE LA APP ---
+# --- 5. PANTALLAS ---
 
 # === PANTALLA PRINCIPAL (MENÚ) ===
 if st.session_state.page == 'home':
-    # Encabezado
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown(f"<h2 style='text-align: left;'>👋 Hola, {st.session_state.datos_colaborador['nombre'].split()[0]}</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: left; color: gray;'>Gestión de Recursos Humanos</p>", unsafe_allow_html=True)
+    
+    # Encabezado Diferente según dispositivo (Usando clases CSS)
+    st.markdown(f"""
+    <div style='text-align: left;'>
+        <h2>👋 Hola, {st.session_state.datos_colaborador['nombre'].split()[0]}</h2>
+        <p class='mobile-only' style='color:gray;'>Versión Móvil 📱</p>
+        <p class='desktop-only' style='color:gray;'>Versión Escritorio 💻 - Panel de Control</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     st.markdown("---")
 
-    # GRID DE BOTONES (2 Columnas)
-    # Usamos Emojis grandes para dar color y contexto visual
+    # --- DISEÑO RESPONSIVO (GRID) ---
+    # En PC queremos 4 botones por fila. En Celular Streamlit fuerza 1 por fila automáticamente.
     
-    c1, c2 = st.columns(2)
-    with c1:
-        if st.button("👤\nDatos Personales"): navegar_a('datos')
-    with c2:
-        if st.button("💼\nInfo Laboral"): navegar_a('laboral')
-    
-    c3, c4 = st.columns(2)
-    with c3:
+    # Fila 1
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        if st.button("👤\nDatos"): navegar_a('datos')
+    with col2:
+        if st.button("💼\nLaboral"): navegar_a('laboral')
+    with col3:
         if st.button("⏰\nAsistencia"): navegar_a('asistencia')
-    with c4:
+    with col4:
         if st.button("💰\nPagos"): navegar_a('pagos')
 
-    c5, c6 = st.columns(2)
-    with c5:
-        if st.button("🏖️\nVacaciones"): navegar_a('vacaciones')
-    with c6:
-        if st.button("🏥\nIPS / Social"): navegar_a('ips')
-
-    c7, c8 = st.columns(2)
-    with c7:
-        if st.button("📈\nEvaluación"): navegar_a('evaluacion')
-    with c8:
+    # Fila 2
+    col5, col6, col7, col8 = st.columns(4)
+    with col5:
+        if st.button("🏖️\nVacas"): navegar_a('vacaciones')
+    with col6:
+        if st.button("🏥\nIPS"): navegar_a('ips')
+    with col7:
+        if st.button("📈\nEval"): navegar_a('evaluacion')
+    with col8:
         if st.button("🚪\nSalida"): navegar_a('salida')
-
 
 # === 1. DATOS DEL COLABORADOR ===
 elif st.session_state.page == 'datos':
     st.title("👤 Datos Personales")
-    
     with st.container():
         st.markdown('<div class="info-card">', unsafe_allow_html=True)
-        
-        # Perfil Visual
-        c_img, c_txt = st.columns([1, 2])
-        with c_img:
-            # Avatar genérico
-            st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=90)
+        c_img, c_txt = st.columns([1, 3])
+        with c_img: st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=80)
         with c_txt:
             st.subheader(st.session_state.datos_colaborador["nombre"])
-            st.write(f"**C.I.:** {st.session_state.datos_colaborador['cedula']}")
+            st.write(f"*C.I.:* {st.session_state.datos_colaborador['cedula']}")
         
         st.markdown("---")
-        
-        # Formulario
         nuevo_nombre = st.text_input("Nombre Completo", st.session_state.datos_colaborador["nombre"])
-        nuevo_correo = st.text_input("Correo Electrónico", st.session_state.datos_colaborador["correo"])
-        nuevo_tel = st.text_input("Teléfono / Celular", st.session_state.datos_colaborador["telefono"])
+        nuevo_correo = st.text_input("Correo", st.session_state.datos_colaborador["correo"])
+        nuevo_tel = st.text_input("Teléfono", st.session_state.datos_colaborador["telefono"])
         
         st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("💾 Guardar Cambios"):
-            st.session_state.datos_colaborador.update({
-                "nombre": nuevo_nombre, "correo": nuevo_correo, "telefono": nuevo_tel
-            })
-            st.success("¡Datos actualizados correctamente!")
-        
+        if st.button("💾 Guardar"):
+            st.session_state.datos_colaborador.update({"nombre": nuevo_nombre, "correo": nuevo_correo, "telefono": nuevo_tel})
+            st.success("Guardado")
         st.markdown('</div>', unsafe_allow_html=True)
     volver_inicio()
-
 
 # === 2. INFORMACIÓN LABORAL ===
 elif st.session_state.page == 'laboral':
     st.title("💼 Información Laboral")
-    
     with st.container():
         st.markdown('<div class="info-card">', unsafe_allow_html=True)
-        
-        st.write(f"**Cargo Actual:** {st.session_state.datos_colaborador['cargo']}")
-        st.write(f"**Área:** {st.session_state.datos_colaborador['area']}")
-        
+        c1, c2 = st.columns(2)
+        c1.write(f"*Cargo:* {st.session_state.datos_colaborador['cargo']}")
+        c2.write(f"*Área:* {st.session_state.datos_colaborador['area']}")
         st.markdown("---")
-        cargo = st.selectbox("Cambiar Cargo", ["Analista", "Gerente", "Operario", "Vendedor"], index=0)
-        area = st.selectbox("Cambiar Área", ["Finanzas", "RRHH", "Operaciones", "Comercial"], index=0)
-        contrato = st.selectbox("Tipo de Contrato", ["Indefinido", "Jornalero", "Prestación de Servicios"])
-        st.date_input("Fecha de Ingreso", value=st.session_state.datos_colaborador["ingreso"])
-        
-        st.markdown("---")
-        with st.expander("🎁 Ver Beneficios Corporativos"):
-            st.info("• Seguro Médico Privado (Santa Clara)\n• Vales de Almuerzo\n• Plus por Asistencia")
-            
+        cargo = st.selectbox("Cargo", ["Analista", "Gerente", "Operario"], index=0)
+        area = st.selectbox("Área", ["Finanzas", "RRHH", "Operaciones"], index=0)
+        st.date_input("Ingreso", value=st.session_state.datos_colaborador["ingreso"])
         st.markdown('</div>', unsafe_allow_html=True)
     volver_inicio()
-
 
 # === 3. ASISTENCIA ===
 elif st.session_state.page == 'asistencia':
-    st.title("⏰ Control de Asistencia")
-    
+    st.title("⏰ Asistencia")
     with st.container():
         st.markdown('<div class="info-card">', unsafe_allow_html=True)
-        
-        fecha_hoy = datetime.now().strftime("%d/%m/%Y")
-        st.write(f"**Fecha:** {fecha_hoy}")
-        
         col1, col2 = st.columns(2)
-        with col1:
-            entrada = st.time_input("Entrada", value=time(8, 0))
-        with col2:
-            salida = st.time_input("Salida", value=time(17, 30))
-            
-        if st.button("✅ Registrar Marca"):
-            st.balloons()
-            st.success(f"Marca guardada: {entrada} a {salida}")
-        
+        with col1: entrada = st.time_input("Entrada", value=time(8, 0))
+        with col2: salida = st.time_input("Salida", value=time(17, 30))
+        if st.button("✅ Marcar"): st.success(f"Registrado: {entrada} - {salida}")
         st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Alertas HTML
-        st.markdown('<div class="alert-box success">Horas Extras Hoy: 02:00 Hs</div>', unsafe_allow_html=True)
-        st.markdown('<div class="alert-box warning">⚠️ Llegada tardía registrada ayer</div>', unsafe_allow_html=True)
-        
+        st.info("Horas Extras Hoy: 02:00 Hs")
         st.markdown('</div>', unsafe_allow_html=True)
     volver_inicio()
 
-
-# === 4. REMUNERACIONES ===
+# === 4. PAGOS ===
 elif st.session_state.page == 'pagos':
     st.title("💰 Remuneraciones")
-    
     salario = st.session_state.datos_colaborador["salario"]
-    ips_obrero = salario * 0.09
-    neto = salario - ips_obrero
-    
+    ips = salario * 0.09
+    neto = salario - ips
     with st.container():
         st.markdown('<div class="info-card">', unsafe_allow_html=True)
-        
-        st.metric("Salario Base", f"Gs. {salario:,.0f}".replace(",", "."))
-        
-        c1, c2 = st.columns(2)
-        c1.metric("Desc. IPS (9%)", f"- {ips_obrero:,.0f}".replace(",", "."))
-        c2.metric("Bonificaciones", "Gs. 0")
-        
+        st.metric("Base", f"Gs. {salario:,.0f}".replace(",", "."))
+        st.metric("IPS (9%)", f"- {ips:,.0f}".replace(",", "."))
         st.markdown("---")
-        st.markdown(f"<h3 style='color:green;'>Neto a Cobrar: Gs. {neto:,.0f}</h3>".replace(",", "."), unsafe_allow_html=True)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("📩 Enviar Recibo por Correo"):
-            st.toast("Recibo enviado exitosamente.")
-            
+        st.markdown(f"<h3 style='color:green; text-align:center;'>Neto: Gs. {neto:,.0f}</h3>".replace(",", "."), unsafe_allow_html=True)
+        if st.button("📩 Enviar Recibo"): st.toast("Enviado")
         st.markdown('</div>', unsafe_allow_html=True)
     volver_inicio()
-
 
 # === 5. VACACIONES ===
 elif st.session_state.page == 'vacaciones':
-    st.title("🏖️ Gestión de Vacaciones")
-    
+    st.title("🏖️ Vacaciones")
     with st.container():
         st.markdown('<div class="info-card">', unsafe_allow_html=True)
-        
-        st.write("### 📅 Solicitar Días")
-        fechas = st.date_input("Seleccione fecha inicio y fin", [])
-        
-        if len(fechas) == 2:
-            dias = (fechas[1] - fechas[0]).days + 1
-            st.info(f"Días solicitados: **{dias}**")
-            if st.button("Enviar Solicitud"):
-                st.success("Solicitud enviada a aprobación.")
-        
+        fechas = st.date_input("Rango", [])
+        if st.button("Solicitar"): st.success("Enviado a aprobación")
         st.markdown("---")
-        
         c1, c2 = st.columns(2)
-        c1.metric("Días Causados", "12")
-        c2.metric("Días Tomados", "0")
-        
+        c1.metric("Saldo", "12 Días")
+        c2.metric("Usados", "0 Días")
         st.markdown('</div>', unsafe_allow_html=True)
     volver_inicio()
-
 
 # === 6. IPS ===
 elif st.session_state.page == 'ips':
-    st.title("🏥 IPS y Seguridad Social")
-    
+    st.title("🏥 IPS / Social")
     with st.container():
         st.markdown('<div class="info-card">', unsafe_allow_html=True)
-        
-        st.markdown('<div class="alert-box success">✅ Afiliación IPS: ACTIVO</div>', unsafe_allow_html=True)
-        st.markdown('<div class="alert-box success">✅ Último Aporte: PAGADO</div>', unsafe_allow_html=True)
-        
+        st.success("✅ IPS: ACTIVO")
         st.markdown("---")
-        st.subheader("Reportar Reposo")
-        
-        tipo = st.selectbox("Motivo", ["Enfermedad Común", "Accidente Laboral", "Maternidad"])
-        archivo = st.file_uploader("Adjuntar Certificado Médico")
-        
-        if st.button("Subir Reposo"):
-            st.warning("Certificado subido. RRHH lo verificará pronto.")
-            
+        tipo = st.selectbox("Reposo por:", ["Enfermedad", "Accidente", "Maternidad"])
+        archivo = st.file_uploader("Foto Certificado")
+        if st.button("Subir"): st.warning("Enviado a RRHH")
         st.markdown('</div>', unsafe_allow_html=True)
     volver_inicio()
-
 
 # === 7. EVALUACIÓN ===
 elif st.session_state.page == 'evaluacion':
-    st.title("📈 Evaluación de Desempeño")
-    
+    st.title("📈 Desempeño")
     with st.container():
         st.markdown('<div class="info-card">', unsafe_allow_html=True)
-        
-        st.subheader("Evaluación Mensual")
         prod = st.slider("Productividad", 0, 100, 85)
-        asis = st.slider("Puntualidad", 0, 100, 90)
-        equipo = st.slider("Trabajo en Equipo", 0, 100, 100)
-        
-        promedio = (prod + asis + equipo) / 3
-        st.markdown(f"### Calificación: {promedio:.1f}/100")
-        st.progress(promedio / 100)
-        
-        if promedio > 80:
-            st.success("🌟 ¡Excelente Desempeño!")
-        
+        st.progress(prod / 100)
+        st.markdown(f"<h3 style='text-align:center;'>{prod}/100</h3>", unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
     volver_inicio()
 
-
-# === 8. DESVINCULACIÓN ===
+# === 8. SALIDA ===
 elif st.session_state.page == 'salida':
     st.title("🚪 Desvinculación")
-    
     with st.container():
         st.markdown('<div class="info-card">', unsafe_allow_html=True)
-        
-        st.date_input("Fecha de Salida Prevista")
-        st.selectbox("Motivo", ["Renuncia", "Mutuo Acuerdo", "Despido", "Fin de Contrato"])
-        
-        st.write("Checklist de Salida:")
-        st.checkbox("Devolución de Uniforme")
-        st.checkbox("Devolución de Notebook/Celular")
-        st.checkbox("Baja IPS Procesada")
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        c1, c2 = st.columns(2)
-        with c1:
-            st.button("Calcular Liquidación")
-        with c2:
-            st.button("Descargar Constancia")
-        
+        st.date_input("Fecha Salida")
+        st.selectbox("Motivo", ["Renuncia", "Despido"])
+        st.checkbox("Devolución Uniforme")
+        if st.button("Generar Liquidación"): st.success("Calculado")
         st.markdown('</div>', unsafe_allow_html=True)
     volver_inicio()
