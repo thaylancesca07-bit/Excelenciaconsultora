@@ -1,71 +1,94 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, time
+import base64
 
 # --- 1. CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(
     page_title="RRHH Gestión Integral 🇵🇾",
     layout="centered",
     page_icon="📱",
-    initial_sidebar_state="collapsed" # Ocultamos sidebar para parecer más una App móvil
+    initial_sidebar_state="collapsed"
 )
 
-# --- 2. ESTILO CSS (Personalizado para parecer App Móvil) ---
+# --- 2. ESTILO CSS MEJORADO (Estilo Tarjeta App Móvil) ---
 st.markdown("""
 <style>
-    /* Fondo general */
+    /* Fondo general de la App */
     .stApp {
         background-color: #F0F2F5;
     }
     
-    /* Encabezados */
+    /* Títulos */
     h1, h2, h3 {
         color: #003366;
+        font-family: 'Helvetica', sans-serif;
+        font-weight: 700;
         text-align: center;
-        font-family: 'Arial', sans-serif;
     }
 
-    /* Estilo de los Botones del Menú Principal (Simulando Tarjetas) */
+    /* ESTILO DE LOS BOTONES (LAS TARJETAS DEL MENÚ) */
     div.stButton > button {
         width: 100%;
-        height: 100px;
-        border-radius: 15px;
-        border: none;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        font-weight: bold;
-        font-size: 16px;
-        transition: transform 0.2s;
-    }
-    div.stButton > button:hover {
-        transform: scale(1.02);
+        height: 110px;              /* Altura fija para que parezcan tarjetas */
+        background-color: #FFFFFF;  /* Fondo Blanco para máxima legibilidad */
+        color: #003366;             /* Texto Azul Oscuro */
+        font-size: 18px;            /* Texto grande */
+        font-weight: 800;           /* Texto en negrita */
+        border: 2px solid #E0E0E0;  /* Borde suave */
+        border-radius: 15px;        /* Bordes redondeados */
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Sombra suave */
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        line-height: 1.4;
     }
 
-    /* Colores específicos para botones (Hack visual usando orden) */
-    /* Esto es genérico, Streamlit no permite colorear botones individuales fácilmente sin librerías extra */
-    
-    /* Contenedores de tarjetas de información */
+    /* Efecto al pasar el mouse (Hover) */
+    div.stButton > button:hover {
+        transform: translateY(-3px); /* Se levanta un poco */
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        border-color: #003366;
+        background-color: #F8F9FA;
+        color: #0056b3;
+    }
+
+    /* Estilo de los Contenedores de Información (Info Cards) */
     .info-card {
         background-color: white;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        margin-bottom: 15px;
-        border-left: 5px solid #003366;
+        padding: 25px;
+        border-radius: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+        border-top: 5px solid #003366; /* Detalle de color arriba */
     }
 
-    /* Alertas */
-    .alert-success { background-color: #D4EDDA; color: #155724; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 10px; }
-    .alert-warning { background-color: #FFF3CD; color: #856404; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 10px; }
-    .alert-danger { background-color: #F8D7DA; color: #721C24; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 10px; }
+    /* Alertas personalizadas */
+    .alert-box {
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        font-weight: bold;
+        text-align: center;
+    }
+    .success { background-color: #D4EDDA; color: #155724; border: 1px solid #C3E6CB; }
+    .warning { background-color: #FFF3CD; color: #856404; border: 1px solid #FFEEBA; }
+    .danger  { background-color: #F8D7DA; color: #721C24; border: 1px solid #F5C6CB; }
 
+    /* Forzar ocultar el menú de hamburguesa de Streamlit para que parezca más App */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    
 </style>
 """, unsafe_allow_html=True)
 
 # --- 3. GESTIÓN DE ESTADO (SESSION STATE) ---
-# Aquí guardamos los datos para que no se borren al cambiar de pantalla
 if 'page' not in st.session_state:
     st.session_state.page = 'home'
 
+# Datos de ejemplo persistentes
 if 'datos_colaborador' not in st.session_state:
     st.session_state.datos_colaborador = {
         "nombre": "Juan Pérez",
@@ -78,78 +101,87 @@ if 'datos_colaborador' not in st.session_state:
         "ingreso": datetime.today()
     }
 
-# --- 4. FUNCIONES DE NAVEGACIÓN ---
+# --- 4. NAVEGACIÓN ---
 def navegar_a(pagina):
     st.session_state.page = pagina
+    st.rerun()
 
 def volver_inicio():
-    if st.button("⬅️ Volver al Menú", use_container_width=True):
-        st.session_state.page = 'home'
-        st.rerun()
+    st.markdown("---")
+    # Botón de volver con estilo distinto (más pequeño)
+    col1, col2, col3 = st.columns([1,2,1])
+    with col2:
+        if st.button("🏠 Volver al Menú Principal"):
+            st.session_state.page = 'home'
+            st.rerun()
 
 # --- 5. PANTALLAS DE LA APP ---
 
 # === PANTALLA PRINCIPAL (MENÚ) ===
 if st.session_state.page == 'home':
-    st.image("https://cdn-icons-png.flaticon.com/512/9323/9323499.png", width=80) # Logo genérico
-    st.title("RRHH Gestión Integral")
+    # Encabezado
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='text-align: left;'>👋 Hola, {st.session_state.datos_colaborador['nombre'].split()[0]}</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: left; color: gray;'>Gestión de Recursos Humanos</p>", unsafe_allow_html=True)
     st.markdown("---")
 
-    # Fila 1
+    # GRID DE BOTONES (2 Columnas)
+    # Usamos Emojis grandes para dar color y contexto visual
+    
     c1, c2 = st.columns(2)
     with c1:
         if st.button("👤\nDatos Personales"): navegar_a('datos')
     with c2:
         if st.button("💼\nInfo Laboral"): navegar_a('laboral')
     
-    # Fila 2
     c3, c4 = st.columns(2)
     with c3:
         if st.button("⏰\nAsistencia"): navegar_a('asistencia')
     with c4:
-        if st.button("💰\nRemuneraciones"): navegar_a('pagos')
+        if st.button("💰\nPagos"): navegar_a('pagos')
 
-    # Fila 3
     c5, c6 = st.columns(2)
     with c5:
         if st.button("🏖️\nVacaciones"): navegar_a('vacaciones')
     with c6:
         if st.button("🏥\nIPS / Social"): navegar_a('ips')
 
-    # Fila 4
     c7, c8 = st.columns(2)
     with c7:
-        if st.button("📋\nEvaluación"): navegar_a('evaluacion')
+        if st.button("📈\nEvaluación"): navegar_a('evaluacion')
     with c8:
-        if st.button("🚪\nDesvinculación"): navegar_a('salida')
+        if st.button("🚪\nSalida"): navegar_a('salida')
 
 
 # === 1. DATOS DEL COLABORADOR ===
 elif st.session_state.page == 'datos':
-    st.title("1. Datos del Colaborador")
+    st.title("👤 Datos Personales")
     
     with st.container():
         st.markdown('<div class="info-card">', unsafe_allow_html=True)
-        # Foto de perfil simulada
-        c_img, c_info = st.columns([1, 2])
+        
+        # Perfil Visual
+        c_img, c_txt = st.columns([1, 2])
         with c_img:
-            st.image("https://www.w3schools.com/howto/img_avatar.png", width=100)
-        with c_info:
+            # Avatar genérico
+            st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=90)
+        with c_txt:
             st.subheader(st.session_state.datos_colaborador["nombre"])
-            st.caption(st.session_state.datos_colaborador["cargo"])
-
+            st.write(f"**C.I.:** {st.session_state.datos_colaborador['cedula']}")
+        
+        st.markdown("---")
+        
         # Formulario
         nuevo_nombre = st.text_input("Nombre Completo", st.session_state.datos_colaborador["nombre"])
-        nueva_cedula = st.text_input("Cédula de Identidad", st.session_state.datos_colaborador["cedula"])
         nuevo_correo = st.text_input("Correo Electrónico", st.session_state.datos_colaborador["correo"])
-        nuevo_tel = st.text_input("Teléfono", st.session_state.datos_colaborador["telefono"])
+        nuevo_tel = st.text_input("Teléfono / Celular", st.session_state.datos_colaborador["telefono"])
         
-        if st.button("💾 Guardar Cambios", type="primary"):
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("💾 Guardar Cambios"):
             st.session_state.datos_colaborador.update({
-                "nombre": nuevo_nombre, "cedula": nueva_cedula, 
-                "correo": nuevo_correo, "telefono": nuevo_tel
+                "nombre": nuevo_nombre, "correo": nuevo_correo, "telefono": nuevo_tel
             })
-            st.success("¡Datos actualizados!")
+            st.success("¡Datos actualizados correctamente!")
         
         st.markdown('</div>', unsafe_allow_html=True)
     volver_inicio()
@@ -157,49 +189,53 @@ elif st.session_state.page == 'datos':
 
 # === 2. INFORMACIÓN LABORAL ===
 elif st.session_state.page == 'laboral':
-    st.title("2. Información Laboral")
+    st.title("💼 Información Laboral")
     
     with st.container():
         st.markdown('<div class="info-card">', unsafe_allow_html=True)
         
-        cargo = st.selectbox("Cargo", ["Analista", "Gerente", "Operario", "Vendedor"], index=0)
-        area = st.selectbox("Área / Departamento", ["Finanzas", "RRHH", "Operaciones", "Comercial"], index=0)
-        contrato = st.selectbox("Tipo de Contrato", ["Indefinido", "Jornalero", "Prestación de Servicios"])
+        st.write(f"**Cargo Actual:** {st.session_state.datos_colaborador['cargo']}")
+        st.write(f"**Área:** {st.session_state.datos_colaborador['area']}")
         
+        st.markdown("---")
+        cargo = st.selectbox("Cambiar Cargo", ["Analista", "Gerente", "Operario", "Vendedor"], index=0)
+        area = st.selectbox("Cambiar Área", ["Finanzas", "RRHH", "Operaciones", "Comercial"], index=0)
+        contrato = st.selectbox("Tipo de Contrato", ["Indefinido", "Jornalero", "Prestación de Servicios"])
         st.date_input("Fecha de Ingreso", value=st.session_state.datos_colaborador["ingreso"])
         
         st.markdown("---")
-        with st.expander("🎁 Ver Beneficios Activos"):
-            st.write("✅ Seguro Médico Privado")
-            st.write("✅ Vales de Almuerzo")
-            st.write("✅ Plus por Asistencia Perfecta")
+        with st.expander("🎁 Ver Beneficios Corporativos"):
+            st.info("• Seguro Médico Privado (Santa Clara)\n• Vales de Almuerzo\n• Plus por Asistencia")
             
         st.markdown('</div>', unsafe_allow_html=True)
     volver_inicio()
 
 
-# === 3. ASISTENCIA Y HORARIOS ===
+# === 3. ASISTENCIA ===
 elif st.session_state.page == 'asistencia':
-    st.title("3. Asistencia")
+    st.title("⏰ Control de Asistencia")
     
     with st.container():
         st.markdown('<div class="info-card">', unsafe_allow_html=True)
         
+        fecha_hoy = datetime.now().strftime("%d/%m/%Y")
+        st.write(f"**Fecha:** {fecha_hoy}")
+        
         col1, col2 = st.columns(2)
         with col1:
-            entrada = st.time_input("Hora Entrada", value=time(8, 0))
+            entrada = st.time_input("Entrada", value=time(8, 0))
         with col2:
-            salida = st.time_input("Hora Salida", value=time(17, 30))
+            salida = st.time_input("Salida", value=time(17, 30))
             
-        # Cálculo simple de horas (simulado)
-        if st.button("Registrar Marca"):
-            st.success(f"Marca registrada: {entrada} - {salida}")
+        if st.button("✅ Registrar Marca"):
+            st.balloons()
+            st.success(f"Marca guardada: {entrada} a {salida}")
         
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Alertas Visuales
-        st.markdown('<div class="alert-success">Horas Extras Acumuladas: 2:00 Hs</div>', unsafe_allow_html=True)
-        st.markdown('<div class="alert-warning">⚠️ Alerta: 1 Llegada tardía esta semana</div>', unsafe_allow_html=True)
+        # Alertas HTML
+        st.markdown('<div class="alert-box success">Horas Extras Hoy: 02:00 Hs</div>', unsafe_allow_html=True)
+        st.markdown('<div class="alert-box warning">⚠️ Llegada tardía registrada ayer</div>', unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
     volver_inicio()
@@ -207,7 +243,7 @@ elif st.session_state.page == 'asistencia':
 
 # === 4. REMUNERACIONES ===
 elif st.session_state.page == 'pagos':
-    st.title("4. Remuneraciones")
+    st.title("💰 Remuneraciones")
     
     salario = st.session_state.datos_colaborador["salario"]
     ips_obrero = salario * 0.09
@@ -218,15 +254,16 @@ elif st.session_state.page == 'pagos':
         
         st.metric("Salario Base", f"Gs. {salario:,.0f}".replace(",", "."))
         
-        col1, col2 = st.columns(2)
-        col1.metric("Descuento IPS (9%)", f"- {ips_obrero:,.0f}".replace(",", "."))
-        col2.metric("Horas Extras", "Gs. 0")
+        c1, c2 = st.columns(2)
+        c1.metric("Desc. IPS (9%)", f"- {ips_obrero:,.0f}".replace(",", "."))
+        c2.metric("Bonificaciones", "Gs. 0")
         
         st.markdown("---")
-        st.subheader(f"Neto a Cobrar: Gs. {neto:,.0f}".replace(",", "."))
+        st.markdown(f"<h3 style='color:green;'>Neto a Cobrar: Gs. {neto:,.0f}</h3>".replace(",", "."), unsafe_allow_html=True)
         
-        if st.button("📩 Enviar Recibo de Salario"):
-            st.toast("Recibo enviado al correo del colaborador")
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("📩 Enviar Recibo por Correo"):
+            st.toast("Recibo enviado exitosamente.")
             
         st.markdown('</div>', unsafe_allow_html=True)
     volver_inicio()
@@ -234,65 +271,71 @@ elif st.session_state.page == 'pagos':
 
 # === 5. VACACIONES ===
 elif st.session_state.page == 'vacaciones':
-    st.title("5. Vacaciones")
+    st.title("🏖️ Gestión de Vacaciones")
     
     with st.container():
         st.markdown('<div class="info-card">', unsafe_allow_html=True)
         
-        st.write("### 📅 Calendario de Solicitud")
-        fechas = st.date_input("Seleccione rango de vacaciones", [])
+        st.write("### 📅 Solicitar Días")
+        fechas = st.date_input("Seleccione fecha inicio y fin", [])
         
         if len(fechas) == 2:
             dias = (fechas[1] - fechas[0]).days + 1
-            st.info(f"Días seleccionados: {dias}")
-            st.button("Enviar Solicitud", type="primary")
+            st.info(f"Días solicitados: **{dias}**")
+            if st.button("Enviar Solicitud"):
+                st.success("Solicitud enviada a aprobación.")
         
         st.markdown("---")
-        st.write("*Saldo Disponible:* 12 Días")
+        
+        c1, c2 = st.columns(2)
+        c1.metric("Días Causados", "12")
+        c2.metric("Días Tomados", "0")
         
         st.markdown('</div>', unsafe_allow_html=True)
     volver_inicio()
 
 
-# === 6. SEGURIDAD SOCIAL (IPS) ===
+# === 6. IPS ===
 elif st.session_state.page == 'ips':
-    st.title("6. Seguridad Social - IPS")
+    st.title("🏥 IPS y Seguridad Social")
     
     with st.container():
         st.markdown('<div class="info-card">', unsafe_allow_html=True)
         
-        st.markdown('<div class="alert-success">✅ Afiliado a IPS Activo</div>', unsafe_allow_html=True)
-        st.markdown('<div class="alert-success">✅ Aportes al día</div>', unsafe_allow_html=True)
+        st.markdown('<div class="alert-box success">✅ Afiliación IPS: ACTIVO</div>', unsafe_allow_html=True)
+        st.markdown('<div class="alert-box success">✅ Último Aporte: PAGADO</div>', unsafe_allow_html=True)
         
         st.markdown("---")
-        st.subheader("Reportar Novedad")
-        tipo_novedad = st.selectbox("Tipo", ["Reposo Médico", "Accidente Laboral", "Maternidad"])
-        archivo = st.file_uploader("Subir Certificado / Foto")
+        st.subheader("Reportar Reposo")
         
-        if st.button("Enviar a RRHH"):
-            st.warning("Novedad reportada. Pendiente de verificación.")
+        tipo = st.selectbox("Motivo", ["Enfermedad Común", "Accidente Laboral", "Maternidad"])
+        archivo = st.file_uploader("Adjuntar Certificado Médico")
+        
+        if st.button("Subir Reposo"):
+            st.warning("Certificado subido. RRHH lo verificará pronto.")
             
         st.markdown('</div>', unsafe_allow_html=True)
     volver_inicio()
 
 
-# === 7. EVALUACIÓN Y DISCIPLINA ===
+# === 7. EVALUACIÓN ===
 elif st.session_state.page == 'evaluacion':
-    st.title("7. Evaluación y Disciplina")
+    st.title("📈 Evaluación de Desempeño")
     
     with st.container():
         st.markdown('<div class="info-card">', unsafe_allow_html=True)
         
-        st.write("### Desempeño Mensual")
-        prod = st.slider("Productividad", 0, 100, 80)
-        asis = st.slider("Asistencia", 0, 100, 95)
+        st.subheader("Evaluación Mensual")
+        prod = st.slider("Productividad", 0, 100, 85)
+        asis = st.slider("Puntualidad", 0, 100, 90)
+        equipo = st.slider("Trabajo en Equipo", 0, 100, 100)
         
-        st.progress((prod + asis) / 200)
-        st.caption(f"Promedio General: {(prod + asis) / 2}%")
+        promedio = (prod + asis + equipo) / 3
+        st.markdown(f"### Calificación: {promedio:.1f}/100")
+        st.progress(promedio / 100)
         
-        st.markdown("---")
-        st.write("### Historial Disciplinario")
-        st.info("Sin sanciones registradas en los últimos 6 meses.")
+        if promedio > 80:
+            st.success("🌟 ¡Excelente Desempeño!")
         
         st.markdown('</div>', unsafe_allow_html=True)
     volver_inicio()
@@ -300,21 +343,26 @@ elif st.session_state.page == 'evaluacion':
 
 # === 8. DESVINCULACIÓN ===
 elif st.session_state.page == 'salida':
-    st.title("8. Desvinculación")
+    st.title("🚪 Desvinculación")
     
     with st.container():
         st.markdown('<div class="info-card">', unsafe_allow_html=True)
         
-        st.date_input("Fecha de Salida")
-        motivo = st.selectbox("Motivo de Salida", ["Renuncia Voluntaria", "Despido Justificado", "Despido Injustificado", "Término de Contrato"])
+        st.date_input("Fecha de Salida Prevista")
+        st.selectbox("Motivo", ["Renuncia", "Mutuo Acuerdo", "Despido", "Fin de Contrato"])
         
-        check1 = st.checkbox("Checklist: Devolución de Uniforme")
-        check2 = st.checkbox("Checklist: Baja en IPS procesada")
+        st.write("Checklist de Salida:")
+        st.checkbox("Devolución de Uniforme")
+        st.checkbox("Devolución de Notebook/Celular")
+        st.checkbox("Baja IPS Procesada")
         
-        if st.button("Generar Liquidación Final"):
-            st.success("Liquidación calculada. Lista para descargar.")
-            
-        st.button("📄 Descargar Constancia Laboral")
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        c1, c2 = st.columns(2)
+        with c1:
+            st.button("Calcular Liquidación")
+        with c2:
+            st.button("Descargar Constancia")
         
         st.markdown('</div>', unsafe_allow_html=True)
     volver_inicio()
